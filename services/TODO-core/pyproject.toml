@@ -1,5 +1,5 @@
 [project]
-name = "backend-todo"
+name = "todo-core"
 version = "0.1.0"
 description = ""
 authors = [
@@ -8,6 +8,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "djangorestframework (>=3.16.0,<4.0.0)"
 ]
 
 

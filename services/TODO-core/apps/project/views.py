@@ -1,7 +1,8 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.filters import OrderingFilter
-from .models import Task
-from .serializers import TaskSerializer
+from .models import Task, Project
+from .serializers import TaskSerializer, ProjectSerializer
+from .paginators import TaskAndProjectPaginator
 
 
 class TaskViewSet(ModelViewSet):
@@ -10,6 +11,7 @@ class TaskViewSet(ModelViewSet):
     filter_backends = [OrderingFilter]
     ordering_fields = ['created_at', 'title']
     ordering = ['-created_at']
+    pagination_class = TaskAndProjectPaginator
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -22,3 +24,9 @@ class TaskViewSet(ModelViewSet):
             queryset = queryset.filter(status=status)
 
         return queryset
+
+
+class ProjectViewSet(ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    pagination_class = TaskAndProjectPaginator

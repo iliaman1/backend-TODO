@@ -41,7 +41,7 @@ class Task(BaseModel):
 
     title = models.CharField(max_length=128, verbose_name=_('Название'), unique=True)
     description = models.TextField(verbose_name=_('Описание'), blank=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks', verbose_name=_('Проект'))
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project', verbose_name=_('Проект'))
     status = models.CharField(verbose_name=_('Статус'), max_length=20, choices=Status.choices, default=Status.TODO)
     priority = models.CharField(
         verbose_name=_('Приоритет'),

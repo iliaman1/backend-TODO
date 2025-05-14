@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.filters import OrderingFilter
 from .models import Task
 from .serializers import TaskSerializer
 
@@ -6,6 +7,9 @@ from .serializers import TaskSerializer
 class TaskViewSet(ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['created_at', 'title']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()

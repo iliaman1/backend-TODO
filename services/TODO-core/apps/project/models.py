@@ -13,7 +13,7 @@ class Project(BaseModel):
         ARCHIVED = 'Archived', 'Архивный'
         COMPLETED = 'Completed', 'Завершенный'
 
-    name = models.CharField(max_length=128, verbose_name=_('Название'), unique=True)
+    name = models.SlugField(max_length=128, verbose_name=_('Название'), unique=True)
     description = models.TextField(verbose_name=_('Описание'), blank=True)
     status = models.CharField(verbose_name=_('Статус'), max_length=20, choices=Status.choices, default=Status.ACTIVE)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_projects', verbose_name=_('Владелец'))
@@ -39,7 +39,7 @@ class Task(BaseModel):
         REVIEW = 'Review', 'На проверке'
         DONE = 'Done', 'Завершено'
 
-    title = models.CharField(max_length=128, verbose_name=_('Название'), unique=True)
+    title = models.SlugField(max_length=128, verbose_name=_('Название'))
     description = models.TextField(verbose_name=_('Описание'), blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project', verbose_name=_('Проект'))
     status = models.CharField(verbose_name=_('Статус'), max_length=20, choices=Status.choices, default=Status.TODO)
@@ -58,3 +58,4 @@ class Task(BaseModel):
         verbose_name = _('Задача')
         verbose_name_plural = _('Задачи')
         ordering = ['-priority', 'due_date']
+        unique_together = ('project', 'title')

@@ -1,15 +1,15 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import User, Role
 from auth import get_password_hash
 from schemas import UserCreateSchema
 
 
-def get_user(db: Session, email: str):
+def get_user(db: AsyncSession, email: str):
     return db.query(User).filter(User.email== email).first()
 
 
-def create_user(db: Session, user: UserCreateSchema):
+def create_user(db: AsyncSession, user: UserCreateSchema):
     db_user = User(
         email=user.email,
         password_hash=get_password_hash(user.password),

@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_session
 from queries import get_user
@@ -56,7 +56,7 @@ def create_refresh_token(data: dict, expires_delta:Optional[timedelta] = None):
     return encoded_jwt
 
 
-def authenticate_user(db: Session, email: str, password: str):
+def authenticate_user(db: AsyncSession, email: str, password: str):
     user = get_user(db, email)
     if not user:
         return False
@@ -65,7 +65,7 @@ def authenticate_user(db: Session, email: str, password: str):
     return user
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_session)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

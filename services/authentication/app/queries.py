@@ -2,14 +2,14 @@ from sqlalchemy.orm import Session
 
 from app.models.models import User, Role
 from auth import get_password_hash
-from schemas import UserCreate
+from schemas import UserCreateSchema
 
 
 def get_user(db: Session, email: str):
     return db.query(User).filter(User.email== email).first()
 
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: UserCreateSchema):
     db_user = User(
         email=user.email,
         password_hash=get_password_hash(user.password),

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from core.database import get_session
 from queries import get_user
-from schemas import TokenData
+from schemas import TokenDataSchema
 
 SECRET_KEY = "your-secret-key-here"
 ALGORITHM = "HS256"
@@ -76,7 +76,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = TokenDataSchema(email=email)
     except JWTError:
         raise credentials_exception
 

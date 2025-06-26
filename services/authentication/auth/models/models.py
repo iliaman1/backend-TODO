@@ -29,9 +29,8 @@ class User(Model):
     password_hash = Column(String(255), nullable=False)
     is_verified = Column(Boolean, default=False)
 
-    roles = relationship('Role', secondary=user_role_association, back_populates='users')
-    tokens = relationship('JWTToken', back_populates='user')
-    email_verifications = relationship('EmailVerification', back_populates='user')
+    roles = relationship('Role', secondary=user_role_association, back_populates='users', lazy='selectin')
+    email_verifications = relationship('EmailVerification', back_populates='user', lazy='selectin')
 
     __table_args__ = (
         Index('idx_user_email', 'email'),
@@ -45,8 +44,13 @@ class Role(Model):
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
 
-    users = relationship('User', secondary=user_role_association, back_populates='roles')
-    permissions = relationship('Permission', secondary=role_permission_association, back_populates='roles')
+    users = relationship('User', secondary=user_role_association, back_populates='roles', lazy='selectin')
+    permissions = relationship(
+        'Permission',
+        secondary=role_permission_association,
+        back_populates='roles',
+        lazy='selectin'
+    )
 
 
 class Permission(Model):
@@ -56,20 +60,12 @@ class Permission(Model):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
 
-    roles = relationship('Role', secondary=role_permission_association, back_populates='permissions')
-
-
-class JWTToken(Base):
-    __tablename__ = 'jwt_tokens'
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    access_token = Column(String(500), nullable=False)
-    refresh_token = Column(String(500), nullable=False)
-    created_at = Column(DateTime, default=func.now())
-    expires_at = Column(DateTime, nullable=False)
-
-    user = relationship('User', back_populates='tokens')
+    roles = relationship(
+        'Role',
+        secondary=role_permission_association,
+        back_populates='permissions',
+        lazy='selectin'
+    )
 
 
 class EmailVerification(Base):
@@ -77,9 +73,8 @@ class EmailVerification(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    token = Column(String(100), nullable=False)
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now())
     expires_at = Column(DateTime, nullable=False)
 
-    user = relationship('User', back_populates='email_verifications')
+    user = relationship('User', back_populates='email_verifications', lazy='selectin')

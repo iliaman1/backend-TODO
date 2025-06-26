@@ -1,13 +1,16 @@
 import datetime
 import re
 
+from os import environ
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-DATABASE_URL = 'postgresql+asyncpg://user:password@localhost:5432/database'
+
+DATABASE_URL = (f"postgresql+asyncpg://{environ.get('DATABASE_USER')}:{environ.get('DATABASE_PASSWORD')}@"
+                f"{environ.get('DATABASE_HOST')}:{environ.get('DATABASE_PORT')}/{environ.get('DATABASE_NAME')}")
 
 engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
 Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

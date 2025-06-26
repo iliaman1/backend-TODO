@@ -16,7 +16,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.models.models import *
+from auth.models.models import *
 from core.database import Base, DATABASE_URL
 
 # add your model's MetaData object here

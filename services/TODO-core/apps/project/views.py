@@ -3,31 +3,31 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.viewsets import ModelViewSet
 
-from .models import Task, Project
+from .models import Project, Task
 from .paginators import TaskAndProjectPaginator
-from .serializers import TaskSerializer, ProjectSerializer
+from .serializers import ProjectSerializer, TaskSerializer
 
 
 class TaskViewSet(ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     filter_backends = [OrderingFilter]
-    ordering_fields = ['created_at', 'title']
-    ordering = ['-created_at']
+    ordering_fields = ["created_at", "title"]
+    ordering = ["-created_at"]
     pagination_class = TaskAndProjectPaginator
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        title = self.request.query_params.get('title')
-        status = self.request.query_params.get('status')
-        project_name = self.kwargs.get('project_name')
+        title = self.request.query_params.get("title")
+        status = self.request.query_params.get("status")
+        project_name = self.kwargs.get("project_name")
 
         if project_name:
-            project = Project.objects.get(name=self.kwargs['project_name'])
+            project = Project.objects.get(name=self.kwargs["project_name"])
             queryset = Task.objects.filter(project=project)
-            task_title = self.kwargs.get('task_title')
+            task_title = self.kwargs.get("task_title")
             if task_title:
-                return queryset.filter(title=self.kwargs['task_title'])
+                return queryset.filter(title=self.kwargs["task_title"])
 
             return queryset
 
@@ -44,17 +44,14 @@ class TaskViewSet(ModelViewSet):
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except Task.DoesNotExist:
-            return Response(
-                {"error": "Task not found"},
-                status=HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Task not found"}, status=HTTP_404_NOT_FOUND)
 
 
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    lookup_field = 'name'
+    lookup_field = "name"
     pagination_class = TaskAndProjectPaginator
 
     def get_object(self):
-        return self.queryset.get(name=self.kwargs['name'])
+        return self.queryset.get(name=self.kwargs["name"])

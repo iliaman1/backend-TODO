@@ -1,24 +1,23 @@
+from datetime import datetime, timedelta, timezone
 from os import environ
-from datetime import timedelta, datetime, timezone
 from typing import Optional
-from jose import jwt, JWTError
-from fastapi import Request, Depends, HTTPException
 
-from passlib.context import CryptContext
-from pydantic import EmailStr
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
-from auth.models.models import User, Role
+from auth.models.models import Role, User
 from auth.schemas import UserCreateSchema
 from core.database import get_session
+from fastapi import Depends, HTTPException, Request
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from pydantic import EmailStr
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-SECRET_KEY = environ.get('SECRET_KEY')
-ALGORITHM = environ.get('ALGORITHM')
+SECRET_KEY = environ.get("SECRET_KEY")
+ALGORITHM = environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def get_user(db: AsyncSession, user_id: int) -> Optional[User]:
@@ -33,13 +32,13 @@ async def get_user_by_email(db: AsyncSession, email: EmailStr) -> Optional[User]
 
 async def create_user(db: AsyncSession, user: UserCreateSchema) -> User:
     if await get_user_by_email(db, user.email):
-        return {'details': 'This user is registered'}
+        return {"details": "This user is registered"}
 
     db_user = User(
         email=user.email,
         phone=user.phone,
         password_hash=pwd_context.hash(user.password),
-        is_verified=False
+        is_verified=False,
     )
     db.add(db_user)
     await db.commit()
@@ -63,15 +62,19 @@ async def create_user(db: AsyncSession, user: UserCreateSchema) -> User:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({'exp': expire})
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
-    to_encode.update({'exp': expire})
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 

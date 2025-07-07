@@ -2,8 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -17,7 +16,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 from auth.models.models import *
-from core.database import Base, DATABASE_URL
+from core.database import DATABASE_URL, Base
 
 # add your model's MetaData object here
 # for 'autogenerate' support

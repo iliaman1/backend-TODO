@@ -1,7 +1,8 @@
-import os
-from alembic.config import Config
-from alembic import command
 import time
+
+from alembic import command
+from alembic.config import Config
+
 
 def check_migrations():
     retries = 5
@@ -15,6 +16,7 @@ def check_migrations():
             time.sleep(1)
             retries -= 1
     raise Exception("Failed to apply migrations")
+
 
 if __name__ == "__main__":
     check_migrations()

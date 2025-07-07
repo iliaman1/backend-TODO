@@ -1,28 +1,20 @@
 from datetime import datetime
-from typing import List
 
-from pydantic import BaseModel, EmailStr, constr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing_extensions import Optional
 
 
 class UserBaseSchema(BaseModel):
     email: EmailStr = Field(..., examples=["user@example.com"])
     phone: Optional[str] = Field(
-        None,
-        pattern=r"^\+?[1-9]\d{1,14}$",
-        examples=["+1234567890"]
+        None, pattern=r"^\+?[1-9]\d{1,14}$", examples=["+1234567890"]
     )
 
 
 class UserCreateSchema(UserBaseSchema):
-    password: str = Field(
-        ...,
-        min_length=8,
-        max_length=50,
-        examples=["StrongPass123!"]
-    )
+    password: str = Field(..., min_length=8, max_length=50, examples=["StrongPass123!"])
 
-    @field_validator('password')
+    @field_validator("password")
     def validate_password(cls, v):
         errors = []
         if len(v) < 8:
@@ -54,7 +46,7 @@ class UserOutSchema(BaseModel):
                 "email": "user@example.com",
                 "phone": "+1234567890",
                 "is_verified": False,
-                "created_at": "2023-01-01T00:00:00"
+                "created_at": "2023-01-01T00:00:00",
             }
         }
 

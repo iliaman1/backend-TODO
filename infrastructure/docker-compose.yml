@@ -16,9 +16,32 @@ services:
       timeout: 3s
       retries: 5
     ports:
-      - '8001:5432'
+      - '8001:${POSTGRES_PORT}'
     volumes:
       - database:/var/lib/postgresql/data
+
+  test_db:
+    image: postgres:17-alpine
+    hostname: ${TEST_POSTGRES_HOST}
+    container_name: test_database
+    environment:
+      - POSTGRES_DB=${TEST_POSTGRES_DB}
+      - POSTGRES_HOST=${TEST_POSTGRES_HOST}
+      - POSTGRES_PORT=${TEST_POSTGRES_PORT}
+      - POSTGRES_USER=${TEST_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=${TEST_POSTGRES_HOST_AUTH_METHOD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    ports:
+      - '8002:${TEST_POSTGRES_PORT}'
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+
 
   redis:
     image: redis:8-alpine
@@ -71,7 +94,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "
-      python migration_check.py &&
+      alembic upgrade heads &&
       uvicorn main:app --host 0.0.0.0 --port 8000
       "
 
@@ -101,4 +124,5 @@ services:
 
 volumes:
   database:
+  postgres_test_data:
   redis_data:

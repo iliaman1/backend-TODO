@@ -15,8 +15,12 @@ app = Celery(
 
 
 @app.task
-def send_email():
-    msg = MIMEText("Привет! Это письмо отправлено из Docker-контейнера.")
+def send_email(token: str = ""):
+    msg = MIMEText(
+        f"Привет! Это письмо отправлено из Docker-контейнера. "
+        f"Для подтверждения почты перейдите по ссылке. "
+        f"http://0.0.0.0:8000/verify-email?token={token}"
+    )
     msg["Subject"] = "Уведомление (Celery + Docker)"
     msg["From"] = getenv("EMAIL_ADDRESS")
     msg["To"] = getenv("RECIPIENT_EMAIL")

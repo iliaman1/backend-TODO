@@ -2,6 +2,7 @@ from auth.queries import (
     create_access_token,
     create_refresh_token,
     create_user,
+    create_verification_token,
     get_current_user,
     get_user_by_email,
     verify_password,
@@ -11,6 +12,7 @@ from core.database import get_session
 from fastapi import APIRouter, HTTPException, Response, status
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from tasks import send_email
 
 router = APIRouter(tags=["Authentication"])
 
@@ -27,6 +29,9 @@ async def register_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email alredy registered"
         )
+    else:
+        verification_token = create_verification_token(data={"sub": user.email})
+        send_email.delay(token=verification_token)
 
     return db_user
 
@@ -58,11 +63,18 @@ async def login(
         httponly=True,
         secure=True,
         samesite="lax",
+        max_age=600,
+    )
+    response.set_cookie(
+        "refresh_token",
+        refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
         max_age=7200,
     )
     return {
         "access_token": access_token,
-        "token_type": "bearer",
         "refresh_token": refresh_token,
     }
 

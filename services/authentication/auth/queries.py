@@ -2,11 +2,11 @@ from datetime import datetime, timedelta, timezone
 from os import environ
 from typing import Optional
 
+import jwt
 from auth.models.models import Role, User
 from auth.schemas import UserCreateSchema
 from core.database import get_session
 from fastapi import Depends, HTTPException, Request
-from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -65,7 +65,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -74,7 +74,14 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "refresh"})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_verification_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=1))
+    to_encode.update({"exp": expire, "type": "email_verification"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -99,5 +106,5 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_sess
             raise HTTPException(status_code=403, detail="User inactive")
 
         return user
-    except JWTError:
+    except jwt.exceptions.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

@@ -1,9 +1,7 @@
-from core.models import BaseModel
-from django.contrib.auth import get_user_model
+from core.models import BaseModel, User
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-User = get_user_model()
 
 
 class Project(BaseModel):
@@ -21,13 +19,18 @@ class Project(BaseModel):
         default=Status.ACTIVE,
     )
     owner = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_projects",
         verbose_name=_("Владелец"),
+        db_constraint=False,
     )
     members = models.ManyToManyField(
-        User, related_name="projects", verbose_name=_("Участники"), blank=True
+        User,
+        related_name="projects",
+        verbose_name=_("Участники"),
+        blank=True,
+        db_constraint=False,
     )
 
     def __str__(self):

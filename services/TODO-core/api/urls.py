@@ -16,11 +16,9 @@ Including another URLconf
 """
 
 from api import projects, tasks
-from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("", include("rest_framework.urls")),
     path("", include(tasks)),
     path("", include(projects)),

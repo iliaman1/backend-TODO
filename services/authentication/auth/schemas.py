@@ -11,7 +11,7 @@ class UserBaseSchema(BaseModel):
     )
 
 
-class UserCreateSchema(UserBaseSchema):
+class PasswordSchema(BaseModel):
     password: str = Field(..., min_length=8, max_length=50, examples=["StrongPass123!"])
 
     @field_validator("password")
@@ -29,6 +29,18 @@ class UserCreateSchema(UserBaseSchema):
         if errors:
             raise ValueError("; ".join(errors))
         return v
+
+
+class UserCreateSchema(UserBaseSchema, PasswordSchema):
+    pass
+
+
+class UserUpdateSchema(UserBaseSchema):
+    pass
+
+
+class PasswordUpdateSchema(PasswordSchema):
+    old_password: str
 
 
 class UserOutSchema(BaseModel):
@@ -59,3 +71,11 @@ class UserLoginSchema(BaseModel):
 class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class PasswordResetRequestSchema(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetSchema(PasswordSchema):
+    token: str

@@ -1,11 +1,11 @@
 import datetime
 import re
 from os import environ
+from typing import AsyncGenerator
 
 from sqlalchemy import Column, DateTime, Integer
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
 DATABASE_URL = (
@@ -14,14 +14,17 @@ DATABASE_URL = (
 )
 
 engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
-Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 Base = declarative_base()
 
 
-async def get_session() -> AsyncSession:
-    async with Session() as session:
-        return session
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    session = async_session()
+    try:
+        yield session
+    finally:
+        await session.close()
 
 
 class Model(Base):

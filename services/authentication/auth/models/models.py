@@ -2,7 +2,6 @@ from core.database import Base, Model
 from sqlalchemy import (
     Boolean,
     Column,
-    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -12,7 +11,6 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 
 user_role_association = Table(
     "user_role_association",
@@ -41,9 +39,6 @@ class User(Model):
 
     roles = relationship(
         "Role", secondary=user_role_association, back_populates="users", lazy="selectin"
-    )
-    email_verifications = relationship(
-        "EmailVerification", back_populates="user", lazy="selectin"
     )
 
     __table_args__ = (
@@ -82,15 +77,3 @@ class Permission(Model):
         back_populates="permissions",
         lazy="selectin",
     )
-
-
-class EmailVerification(Base):
-    __tablename__ = "email_verifications"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=func.now())
-    expires_at = Column(DateTime, nullable=False)
-
-    user = relationship("User", back_populates="email_verifications", lazy="selectin")

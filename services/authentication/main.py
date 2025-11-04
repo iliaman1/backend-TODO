@@ -3,6 +3,7 @@ from auth.routers.auth import auth_required, router
 from core.database import get_session
 from fastapi import Depends, FastAPI
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email
 
 app = FastAPI()
@@ -20,13 +21,10 @@ def onlyauth(user_id: str = Depends(auth_required)):
 
 
 @app.get("/test")
-async def test_session():
-    session = await get_session()
-    try:
-        result = await session.execute(text("SELECT 1"))
-        return {"data": result.scalar()}  # Должно быть 1
-    finally:
-        await session.close()
+async def test_session(session: AsyncSession = Depends(get_session)):
+    print("Database session check successful.")
+    result = await session.execute(text("SELECT 1"))
+    return {"data": result.scalar()}
 
 
 @app.post("/send-email")

@@ -5,8 +5,7 @@ from typing import Optional
 import jwt
 from auth.models.models import Role, User
 from auth.schemas import UserCreateSchema
-from core.database import get_session
-from fastapi import Depends, HTTPException, Request
+from fastapi import HTTPException
 from passlib.context import CryptContext
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -60,8 +59,19 @@ async def create_user(db: AsyncSession, user: UserCreateSchema) -> User:
     return db_user
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
+async def update_user_password(db: AsyncSession, user: User, new_password: str):
+    user.password_hash = pwd_context.hash(new_password)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+def create_access_token(user: User, expires_delta: Optional[timedelta] = None):
+    to_encode = {
+        "sub": user.email,
+        "user_id": user.id,
+        "roles": [role.name for role in user.roles],
+    }
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
@@ -69,8 +79,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
+def create_refresh_token(user: User, expires_delta: Optional[timedelta] = None):
+    to_encode = {
+        "sub": user.email,
+        "user_id": user.id,
+    }
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
@@ -85,26 +98,44 @@ def create_verification_token(data: dict, expires_delta: Optional[timedelta] = N
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def create_password_reset_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(hours=1))
+    to_encode.update({"exp": expire, "type": "password_reset"})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def get_current_user(request: Request, db: AsyncSession = Depends(get_session)):
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
+def _validate_token(token: str, expected_type: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("user_id")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token")
+        required_fields = ["sub", "type", "exp"]
+        for field in required_fields:
+            if field not in payload:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid token: missing {field} field"
+                )
 
-        # Проверяем активность пользователя
-        user = await db.get(User, int(user_id))
-        if not user:
-            raise HTTPException(status_code=403, detail="User inactive")
+        if payload["type"] != expected_type:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid token type. Expected: {expected_type}"
+            )
 
-        return user
-    except jwt.exceptions.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        if datetime.now(timezone.utc).timestamp() > payload["exp"]:
+            raise HTTPException(status_code=400, detail="Token has expired")
+
+        return payload
+
+    except jwt.exceptions.PyJWTError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid token: {str(e)}")
+
+
+def validation_verify_email(token: str):
+    return _validate_token(token, "email_verification")
+
+
+def validate_password_reset_token(token: str):
+    return _validate_token(token, "password_reset")

@@ -1,5 +1,9 @@
 import uvicorn
-from auth.routers.auth import auth_required, router
+from auth.dependencies import get_current_user
+from auth.models.models import User
+from auth.routers.admin import admin_router
+from auth.routers.auth import auth_router
+from auth.schemas import UserOutSchema
 from core.database import get_session
 from fastapi import Depends, FastAPI
 from sqlalchemy import text
@@ -7,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email
 
 app = FastAPI()
-app.include_router(router)
+app.include_router(auth_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
@@ -15,9 +20,9 @@ def read_root():
     return {"message": "auth service"}
 
 
-@app.get("/onlyauth")
-def onlyauth(user_id: str = Depends(auth_required)):
-    return {"user_id": user_id, "message": "Authenticated!"}
+@app.get("/onlyauth", response_model=UserOutSchema)
+async def onlyauth(user: User = Depends(get_current_user)):
+    return user
 
 
 @app.get("/test")

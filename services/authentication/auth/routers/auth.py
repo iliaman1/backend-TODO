@@ -25,10 +25,10 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email, send_password_reset_email
 
-router = APIRouter(tags=["Authentication"])
+auth_router = APIRouter(tags=["Authentication"])
 
 
-@router.post(
+@auth_router.post(
     "/register", response_model=UserOutSchema, status_code=status.HTTP_201_CREATED
 )
 async def register_user(
@@ -47,7 +47,7 @@ async def register_user(
     return db_user
 
 
-@router.post("/login")
+@auth_router.post("/login")
 async def login(
     credentials: UserLoginSchema,
     response: Response,
@@ -86,7 +86,7 @@ async def login(
     }
 
 
-@router.post("/logout")
+@auth_router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie("access_token")
     return {"message": "Logged out"}
@@ -96,7 +96,7 @@ async def auth_required(user: User = Depends(get_current_user)):
     return user
 
 
-@router.get("/verify-email")
+@auth_router.get("/verify-email")
 async def verify_email(token: str, session: AsyncSession = Depends(get_session)):
     payload = validation_verify_email(token)
     print(payload["sub"])
@@ -130,7 +130,7 @@ async def verify_email(token: str, session: AsyncSession = Depends(get_session))
         )
 
 
-@router.post("/password-reset-request")
+@auth_router.post("/password-reset-request")
 async def password_reset_request(
     reset_request: PasswordResetRequestSchema,
     session: AsyncSession = Depends(get_session),
@@ -144,7 +144,7 @@ async def password_reset_request(
     }
 
 
-@router.post("/password-reset")
+@auth_router.post("/password-reset")
 async def password_reset(
     reset_data: PasswordResetSchema, session: AsyncSession = Depends(get_session)
 ):
@@ -159,6 +159,6 @@ async def password_reset(
     return {"message": "Password has been reset successfully."}
 
 
-@router.get("/admin/test", dependencies=[Depends(RoleChecker(["admin"]))])
+@auth_router.get("/admin/test", dependencies=[Depends(RoleChecker(["admin"]))])
 async def admin_test():
     return {"message": "Admin-only endpoint"}

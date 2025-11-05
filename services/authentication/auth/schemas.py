@@ -79,3 +79,29 @@ class PasswordResetRequestSchema(BaseModel):
 
 class PasswordResetSchema(PasswordSchema):
     token: str
+
+
+class PermissionSchema(BaseModel):
+    name: str
+    codename: str
+    description: Optional[str] = None
+
+
+class PermissionOutSchema(PermissionSchema):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class RoleSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class RoleOutSchema(RoleSchema):
+    id: int
+    permissions: list[PermissionOutSchema] = []
+
+    class Config:
+        from_attributes = True

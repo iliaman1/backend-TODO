@@ -3,8 +3,8 @@ from os import environ
 from typing import Optional
 
 import jwt
-from auth.models.models import Role, User
-from auth.schemas import UserCreateSchema
+from auth.models.models import Permission, Role, User
+from auth.schemas import PermissionSchema, RoleSchema, UserCreateSchema
 from fastapi import HTTPException
 from passlib.context import CryptContext
 from pydantic import EmailStr
@@ -43,11 +43,11 @@ async def create_user(db: AsyncSession, user: UserCreateSchema) -> User:
     await db.commit()
     await db.refresh(db_user)
 
-    default_role = await db.execute(select(Role).where(Role.name == "user"))
+    default_role = await db.execute(select(Role).where(Role.name == "admin"))
     default_role = default_role.scalars().first()
 
     if not default_role:
-        default_role = Role(name="user", description="Regular user")
+        default_role = Role(name="admin", description="Regular admin user")
         db.add(default_role)
         await db.commit()
         await db.refresh(default_role)
@@ -139,3 +139,90 @@ def validation_verify_email(token: str):
 
 def validate_password_reset_token(token: str):
     return _validate_token(token, "password_reset")
+
+
+async def create_role(db: AsyncSession, role: RoleSchema) -> Role:
+    db_role = Role(name=role.name, description=role.description)
+    db.add(db_role)
+    await db.commit()
+    await db.refresh(db_role)
+    return db_role
+
+
+async def get_roles(db: AsyncSession):
+    result = await db.execute(select(Role))
+    return result.scalars().all()
+
+
+async def get_role(db: AsyncSession, role_id: int) -> Optional[Role]:
+    result = await db.execute(select(Role).where(Role.id == role_id))
+    return result.scalars().first()
+
+
+async def update_role(
+    db: AsyncSession, role_id: int, role_data: RoleSchema
+) -> Optional[Role]:
+    db_role = await get_role(db, role_id)
+    if db_role:
+        db_role.name = role_data.name
+        db_role.description = role_data.description
+        await db.commit()
+        await db.refresh(db_role)
+    return db_role
+
+
+async def delete_role(db: AsyncSession, role_id: int) -> bool:
+    db_role = await get_role(db, role_id)
+    if db_role:
+        await db.delete(db_role)
+        await db.commit()
+        return True
+    return False
+
+
+async def create_permission(
+    db: AsyncSession, permission: PermissionSchema
+) -> Permission:
+    db_permission = Permission(
+        name=permission.name,
+        codename=permission.codename,
+        description=permission.description,
+    )
+    db.add(db_permission)
+    await db.commit()
+    await db.refresh(db_permission)
+    return db_permission
+
+
+async def get_permissions(db: AsyncSession):
+    result = await db.execute(select(Permission))
+    return result.scalars().all()
+
+
+async def get_permission(db: AsyncSession, permission_id: int) -> Optional[Permission]:
+    result = await db.execute(select(Permission).where(Permission.id == permission_id))
+    return result.scalars().first()
+
+
+async def assign_permission_to_role(
+    db: AsyncSession, role_id: int, permission_id: int
+) -> Optional[Role]:
+    role = await get_role(db, role_id)
+    permission = await get_permission(db, permission_id)
+    if role and permission:
+        role.permissions.append(permission)
+        await db.commit()
+        await db.refresh(role)
+    return role
+
+
+async def remove_permission_from_role(
+    db: AsyncSession, role_id: int, permission_id: int
+) -> Optional[Role]:
+    role = await get_role(db, role_id)
+    permission = await get_permission(db, permission_id)
+    if role and permission and permission in role.permissions:
+        role.permissions.remove(permission)
+        await db.commit()
+        await db.refresh(role)
+    return role

@@ -1,6 +1,7 @@
 from typing import List
 
 from auth.dependencies import RoleChecker
+from auth.enums import SortDirection, UserSortBy
 from auth.queries import (
     assign_permission_to_role,
     create_permission,
@@ -85,9 +86,13 @@ async def list_permissions(db: AsyncSession = Depends(get_session)):
 
 @admin_router.get("/users", response_model=UserListSchema)
 async def list_users(
-    db: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 10
+    db: AsyncSession = Depends(get_session),
+    skip: int = 0,
+    limit: int = 10,
+    sort_by: UserSortBy = UserSortBy.CREATED_AT,
+    sort_dir: SortDirection = SortDirection.DESC,
 ):
-    return await get_users(db, skip, limit)
+    return await get_users(db, skip, limit, sort_by, sort_dir)
 
 
 @admin_router.post(

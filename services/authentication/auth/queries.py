@@ -3,6 +3,7 @@ from os import environ
 from typing import Optional
 
 import jwt
+from auth.enums import SortDirection, UserSortBy
 from auth.models.models import Permission, Role, User
 from auth.schemas import (
     PermissionSchema,
@@ -237,11 +238,33 @@ async def get_permission(db: AsyncSession, permission_id: int) -> Optional[Permi
     return result.scalars().first()
 
 
-async def get_users(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(User).offset(skip).limit(limit))
-    users = result.scalars().all()
+async def get_users(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 10,
+    sort_by: UserSortBy = UserSortBy.CREATED_AT,
+    sort_dir: SortDirection = SortDirection.DESC,
+):
+    query = select(User)
+
+    if sort_by == UserSortBy.ROLE:
+        query = query.join(User.roles).order_by(
+            Role.name.desc() if sort_dir == SortDirection.DESC else Role.name.asc()
+        )
+    else:
+        sort_column = getattr(User, sort_by.value)
+        query = query.order_by(
+            sort_column.desc() if sort_dir == SortDirection.DESC else sort_column.asc()
+        )
+
+    query = query.offset(skip).limit(limit)
+
+    result = await db.execute(query)
+    users = result.scalars().unique().all()
+
     total_result = await db.execute(select(func.count(User.id)))
     total = total_result.scalar_one()
+
     return {"total": total, "users": users}
 
 

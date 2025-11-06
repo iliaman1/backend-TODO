@@ -141,6 +141,10 @@ def validate_password_reset_token(token: str):
     return _validate_token(token, "password_reset")
 
 
+def validate_refresh_token(token: str):
+    return _validate_token(token, "refresh")
+
+
 async def create_role(db: AsyncSession, role: RoleSchema) -> Role:
     db_role = Role(name=role.name, description=role.description)
     db.add(db_role)

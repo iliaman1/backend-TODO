@@ -9,6 +9,7 @@ from auth.queries import (
     get_user_by_email,
     update_user_password,
     validate_password_reset_token,
+    validate_refresh_token,
     validation_verify_email,
     verify_password,
 )
@@ -20,7 +21,7 @@ from auth.schemas import (
     UserOutSchema,
 )
 from core.database import get_session
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email, send_password_reset_email
@@ -90,6 +91,42 @@ async def login(
 async def logout(response: Response):
     response.delete_cookie("access_token")
     return {"message": "Logged out"}
+
+
+@auth_router.get("/users/me", response_model=UserOutSchema)
+async def get_current_user_info(user: User = Depends(get_current_user)):
+    return user
+
+
+@auth_router.post("/refresh")
+async def refresh_access_token(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_session),
+):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token not found"
+        )
+
+    payload = validate_refresh_token(refresh_token)
+    user = await get_user_by_email(db, payload["sub"])
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
+
+    access_token = create_access_token(user=user)
+    response.set_cookie(
+        "access_token",
+        access_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=600,
+    )
+    return {"access_token": access_token}
 
 
 async def auth_required(user: User = Depends(get_current_user)):

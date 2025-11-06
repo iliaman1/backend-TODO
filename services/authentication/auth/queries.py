@@ -244,11 +244,19 @@ async def get_users(
     limit: int = 10,
     sort_by: UserSortBy = UserSortBy.CREATED_AT,
     sort_dir: SortDirection = SortDirection.DESC,
+    role_id: Optional[int] = None,
 ):
     query = select(User)
+    count_query = select(func.count(User.id))
+
+    if role_id:
+        query = query.join(User.roles).where(Role.id == role_id)
+        count_query = count_query.join(User.roles).where(Role.id == role_id)
 
     if sort_by == UserSortBy.ROLE:
-        query = query.join(User.roles).order_by(
+        if not role_id:
+            query = query.join(User.roles)
+        query = query.order_by(
             Role.name.desc() if sort_dir == SortDirection.DESC else Role.name.asc()
         )
     else:
@@ -262,7 +270,7 @@ async def get_users(
     result = await db.execute(query)
     users = result.scalars().unique().all()
 
-    total_result = await db.execute(select(func.count(User.id)))
+    total_result = await db.execute(count_query)
     total = total_result.scalar_one()
 
     return {"total": total, "users": users}

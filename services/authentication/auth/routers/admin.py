@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from auth.dependencies import RoleChecker
 from auth.enums import SortDirection, UserSortBy
@@ -91,8 +91,9 @@ async def list_users(
     limit: int = 10,
     sort_by: UserSortBy = UserSortBy.CREATED_AT,
     sort_dir: SortDirection = SortDirection.DESC,
+    role_id: Optional[int] = None,
 ):
-    return await get_users(db, skip, limit, sort_by, sort_dir)
+    return await get_users(db, skip, limit, sort_by, sort_dir, role_id)
 
 
 @admin_router.post(

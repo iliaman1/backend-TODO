@@ -35,8 +35,11 @@ class UserCreateSchema(UserBaseSchema, PasswordSchema):
     pass
 
 
-class UserUpdateSchema(UserBaseSchema):
-    pass
+class UserUpdateSchema(BaseModel):
+    email: Optional[EmailStr] = Field(None, examples=["new_user@example.com"])
+    phone: Optional[str] = Field(
+        None, pattern=r"^\+?[1-9]\d{1,14}$", examples=["+1234567890"]
+    )
 
 
 class PasswordUpdateSchema(PasswordSchema):
@@ -105,3 +108,8 @@ class RoleOutSchema(RoleSchema):
 
     class Config:
         from_attributes = True
+
+
+class UserListSchema(BaseModel):
+    total: int
+    users: list[UserOutSchema]

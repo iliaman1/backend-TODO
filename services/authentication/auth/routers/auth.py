@@ -6,7 +6,9 @@ from auth.queries import (
     create_refresh_token,
     create_user,
     create_verification_token,
+    delete_user,
     get_user_by_email,
+    update_user,
     update_user_password,
     validate_password_reset_token,
     validate_refresh_token,
@@ -19,6 +21,7 @@ from auth.schemas import (
     UserCreateSchema,
     UserLoginSchema,
     UserOutSchema,
+    UserUpdateSchema,
 )
 from core.database import get_session
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -96,6 +99,23 @@ async def logout(response: Response):
 @auth_router.get("/users/me", response_model=UserOutSchema)
 async def get_current_user_info(user: User = Depends(get_current_user)):
     return user
+
+
+@auth_router.patch("/users/me", response_model=UserOutSchema)
+async def update_current_user(
+    user_data: UserUpdateSchema,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+):
+    return await update_user(db, user, user_data)
+
+
+@auth_router.delete("/users/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_current_user(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+):
+    await delete_user(db, user)
 
 
 @auth_router.post("/refresh")

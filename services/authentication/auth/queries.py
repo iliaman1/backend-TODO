@@ -4,11 +4,16 @@ from typing import Optional
 
 import jwt
 from auth.models.models import Permission, Role, User
-from auth.schemas import PermissionSchema, RoleSchema, UserCreateSchema
+from auth.schemas import (
+    PermissionSchema,
+    RoleSchema,
+    UserCreateSchema,
+    UserUpdateSchema,
+)
 from fastapi import HTTPException
 from passlib.context import CryptContext
 from pydantic import EmailStr
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 SECRET_KEY = environ.get("SECRET_KEY")
@@ -43,11 +48,11 @@ async def create_user(db: AsyncSession, user: UserCreateSchema) -> User:
     await db.commit()
     await db.refresh(db_user)
 
-    default_role = await db.execute(select(Role).where(Role.name == "admin"))
+    default_role = await db.execute(select(Role).where(Role.name == "user"))
     default_role = default_role.scalars().first()
 
     if not default_role:
-        default_role = Role(name="admin", description="Regular admin user")
+        default_role = Role(name="user", description="Regular user")
         db.add(default_role)
         await db.commit()
         await db.refresh(default_role)
@@ -64,6 +69,30 @@ async def update_user_password(db: AsyncSession, user: User, new_password: str):
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def update_user(
+    db: AsyncSession, user: User, user_data: UserUpdateSchema
+) -> Optional[User]:
+    # Check for email uniqueness if it is being changed
+    if user_data.email and user_data.email != user.email:
+        existing_user = await get_user_by_email(db, user_data.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=400, detail="Email already registered by another user."
+            )
+
+    for field, value in user_data.model_dump(exclude_unset=True):
+        setattr(user, field, value)
+
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    await db.delete(user)
+    await db.commit()
 
 
 def create_access_token(user: User, expires_delta: Optional[timedelta] = None):
@@ -206,6 +235,14 @@ async def get_permissions(db: AsyncSession):
 async def get_permission(db: AsyncSession, permission_id: int) -> Optional[Permission]:
     result = await db.execute(select(Permission).where(Permission.id == permission_id))
     return result.scalars().first()
+
+
+async def get_users(db: AsyncSession, skip: int = 0, limit: int = 10):
+    result = await db.execute(select(User).offset(skip).limit(limit))
+    users = result.scalars().all()
+    total_result = await db.execute(select(func.count(User.id)))
+    total = total_result.scalar_one()
+    return {"total": total, "users": users}
 
 
 async def assign_permission_to_role(

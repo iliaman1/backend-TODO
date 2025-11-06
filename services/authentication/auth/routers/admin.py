@@ -9,6 +9,7 @@ from auth.queries import (
     get_permissions,
     get_role,
     get_roles,
+    get_users,
     remove_permission_from_role,
     update_role,
 )
@@ -17,6 +18,7 @@ from auth.schemas import (
     PermissionSchema,
     RoleOutSchema,
     RoleSchema,
+    UserListSchema,
 )
 from core.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -29,7 +31,6 @@ admin_router = APIRouter(
 )
 
 
-# Roles Endpoints
 @admin_router.post(
     "/roles", response_model=RoleOutSchema, status_code=status.HTTP_201_CREATED
 )
@@ -66,7 +67,6 @@ async def remove_role(role_id: int, db: AsyncSession = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Role not found")
 
 
-# Permissions Endpoints
 @admin_router.post(
     "/permissions",
     response_model=PermissionOutSchema,
@@ -83,7 +83,13 @@ async def list_permissions(db: AsyncSession = Depends(get_session)):
     return await get_permissions(db)
 
 
-# Role-Permission Management Endpoints
+@admin_router.get("/users", response_model=UserListSchema)
+async def list_users(
+    db: AsyncSession = Depends(get_session), skip: int = 0, limit: int = 10
+):
+    return await get_users(db, skip, limit)
+
+
 @admin_router.post(
     "/roles/{role_id}/permissions/{permission_id}",
     response_model=RoleOutSchema,

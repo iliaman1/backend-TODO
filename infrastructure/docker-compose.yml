@@ -1,4 +1,19 @@
 services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - static_volume:/app/staticfiles
+    depends_on:
+      - auth-api
+      - todo-api
+    networks:
+      - backend-net
+
   auth-db:
     image: postgres:15-alpine
     container_name: auth-db
@@ -58,11 +73,9 @@ services:
     container_name: auth-api
     command: >
       sh -c "alembic upgrade heads &&
-             uvicorn main:app --host 0.0.0.0 --port 8000"
+             uvicorn main:app --host 0.0.0.0 --port 8001"
     volumes:
       - ../services/authentication:/app
-    ports:
-      - "8001:8000"
     env_file:
       - ../services/authentication/.env
     depends_on:
@@ -99,12 +112,13 @@ services:
       dockerfile: Dockerfile
     container_name: todo-api
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py collectstatic --noinput &&
+             chown -R 101:101 /app/staticfiles &&
+             python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ../services/TODO-core:/app
-    ports:
-      - "8002:8000"
+      - static_volume:/app/staticfiles
     env_file:
       - ../services/TODO-core/.env
     depends_on:
@@ -122,3 +136,4 @@ volumes:
   auth_postgres_data:
   todo_postgres_data:
   redis_data:
+  static_volume:

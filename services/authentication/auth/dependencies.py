@@ -1,24 +1,21 @@
 from typing import Dict, List
 
-import jwt
 from auth.models.models import User
-from auth.queries import ALGORITHM, SECRET_KEY, get_user
+from auth.queries import get_user, validate_access_token
 from core.database import get_session
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def get_token_payload(request: Request) -> Dict:
+def get_token_from_cookie(request: Request):
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        return payload
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    return token
+
+
+def get_token_payload(token: str = Depends(get_token_from_cookie)) -> Dict:
+    return validate_access_token(token)
 
 
 async def get_current_user(

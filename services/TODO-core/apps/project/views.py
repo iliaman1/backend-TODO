@@ -53,5 +53,8 @@ class ProjectViewSet(ModelViewSet):
     lookup_field = "name"
     pagination_class = TaskAndProjectPaginator
 
+    def perform_create(self, serializer):
+        serializer.save(owner_id=self.request.user.id)
+
     def get_object(self):
         return self.queryset.get(name=self.kwargs["name"])

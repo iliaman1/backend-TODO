@@ -1,5 +1,4 @@
-from core.models import BaseModel, User
-from django.conf import settings
+from core.models import BaseModel
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -18,20 +17,7 @@ class Project(BaseModel):
         choices=Status.choices,
         default=Status.ACTIVE,
     )
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="owned_projects",
-        verbose_name=_("Владелец"),
-        db_constraint=False,
-    )
-    members = models.ManyToManyField(
-        User,
-        related_name="projects",
-        verbose_name=_("Участники"),
-        blank=True,
-        db_constraint=False,
-    )
+    owner_id = models.IntegerField(verbose_name=_("ID Владельца"))
 
     def __str__(self):
         return self.name

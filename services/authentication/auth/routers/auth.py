@@ -1,4 +1,9 @@
-from auth.dependencies import RoleChecker, get_current_user
+from auth.dependencies import (
+    RoleChecker,
+    get_current_user,
+    get_token_from_cookie,
+    get_token_payload,
+)
 from auth.models.models import User
 from auth.queries import (
     create_access_token,
@@ -96,6 +101,11 @@ async def logout(response: Response):
     return {"message": "Logged out"}
 
 
+@auth_router.get("/token")
+async def get_token(request: Request):
+    return request.cookies.get("access_token")
+
+
 @auth_router.get("/users/me", response_model=UserOutSchema)
 async def get_current_user_info(user: User = Depends(get_current_user)):
     return user
@@ -153,10 +163,26 @@ async def auth_required(user: User = Depends(get_current_user)):
     return user
 
 
+@auth_router.get("/verify-token")
+async def verify_token_endpoint(token: str = Depends(get_token_from_cookie)):
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    payload = get_token_payload(token)
+
+    return {
+        "sub": payload.get("sub"),
+        "user_id": payload.get("user_id"),
+        "roles": payload.get("roles"),
+        "valid": True,
+    }
+
+
 @auth_router.get("/verify-email")
 async def verify_email(token: str, session: AsyncSession = Depends(get_session)):
     payload = validation_verify_email(token)
-    print(payload["sub"])
     try:
         user = await get_user_by_email(session, payload["sub"])
         if not user:

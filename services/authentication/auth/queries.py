@@ -17,7 +17,7 @@ from pydantic import EmailStr
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-SECRET_KEY = environ.get("SECRET_KEY")
+JWT_SECRET_KEY = environ.get("JWT_SECRET_KEY")
 ALGORITHM = environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -106,7 +106,7 @@ def create_access_token(user: User, expires_delta: Optional[timedelta] = None):
         expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode.update({"exp": expire, "type": "access"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_refresh_token(user: User, expires_delta: Optional[timedelta] = None):
@@ -118,21 +118,21 @@ def create_refresh_token(user: User, expires_delta: Optional[timedelta] = None):
         expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
     to_encode.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_verification_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=1))
     to_encode.update({"exp": expire, "type": "email_verification"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_password_reset_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(hours=1))
     to_encode.update({"exp": expire, "type": "password_reset"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_password(plain_password: str, hashed_password: str):
@@ -141,7 +141,7 @@ def verify_password(plain_password: str, hashed_password: str):
 
 def _validate_token(token: str, expected_type: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         required_fields = ["sub", "type", "exp"]
         for field in required_fields:
             if field not in payload:
@@ -165,6 +165,10 @@ def _validate_token(token: str, expected_type: str):
 
 def validation_verify_email(token: str):
     return _validate_token(token, "email_verification")
+
+
+def validate_access_token(token: str):
+    return _validate_token(token, "access")
 
 
 def validate_password_reset_token(token: str):

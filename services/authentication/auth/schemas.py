@@ -46,26 +46,6 @@ class PasswordUpdateSchema(PasswordSchema):
     old_password: str
 
 
-class UserOutSchema(BaseModel):
-    id: int = Field(..., examples=[1])
-    email: EmailStr = Field(..., examples=["user@example.com"])
-    phone: Optional[str] = Field(None, examples=["+1234567890"])
-    is_verified: bool = Field(False, examples=[False])
-    created_at: datetime = Field(..., examples=["2023-01-01T00:00:00"])
-
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
-            "example": {
-                "id": 1,
-                "email": "user@example.com",
-                "phone": "+1234567890",
-                "is_verified": False,
-                "created_at": "2023-01-01T00:00:00",
-            }
-        }
-
-
 class UserLoginSchema(BaseModel):
     email: EmailStr
     password: str
@@ -108,6 +88,27 @@ class RoleOutSchema(RoleSchema):
 
     class Config:
         from_attributes = True
+
+
+class UserOutSchema(BaseModel):
+    id: int = Field(..., examples=[1])
+    email: EmailStr = Field(..., examples=["user@example.com"])
+    phone: Optional[str] = Field(None, examples=["+1234567890"])
+    is_verified: bool = Field(False, examples=[False])
+    created_at: datetime = Field(..., examples=["2023-01-01T00:00:00"])
+    roles: list[RoleOutSchema] = []
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "phone": "+1234567890",
+                "is_verified": False,
+                "created_at": "2023-01-01T00:00:00",
+            }
+        }
 
 
 class UserListSchema(BaseModel):

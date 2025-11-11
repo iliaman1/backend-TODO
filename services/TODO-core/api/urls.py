@@ -19,7 +19,6 @@ from api import projects, tasks
 from django.urls import include, path
 
 urlpatterns = [
-    path("", include("rest_framework.urls")),
     path("", include(tasks)),
     path("", include(projects)),
 ]

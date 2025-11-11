@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email
 
-app = FastAPI()
+app = FastAPI(openapi_prefix="/api/auth")
 app.include_router(auth_router)
 app.include_router(admin_router)
 

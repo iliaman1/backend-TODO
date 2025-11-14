@@ -116,6 +116,8 @@ USE_I18N = True
 
 USE_TZ = True
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+FORCE_SCRIPT_NAME = "/api/core"
 
 
 # Static files (CSS, JavaScript, Images)

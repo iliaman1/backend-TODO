@@ -1,4 +1,5 @@
 from core.models import BaseModel
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -18,6 +19,12 @@ class Project(BaseModel):
         default=Status.ACTIVE,
     )
     owner_id = models.IntegerField(verbose_name=_("ID Владельца"))
+    members = ArrayField(
+        models.IntegerField(),
+        verbose_name=_("ID Участников"),
+        default=list,
+        blank=True,
+    )
 
     def __str__(self):
         return self.name

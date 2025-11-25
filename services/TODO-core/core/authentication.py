@@ -15,6 +15,10 @@ class JWTPayloadUser:
         return self.payload.get("user_id")
 
     @property
+    def email(self):
+        return self.payload.get("sub")
+
+    @property
     def roles(self):
         return self.payload.get("roles", [])
 

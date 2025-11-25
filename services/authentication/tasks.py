@@ -19,7 +19,7 @@ def send_email(token: str = ""):
     msg = MIMEText(
         f"Привет! Это письмо отправлено из Docker-контейнера. "
         f"Для подтверждения почты перейдите по ссылке. "
-        f"http://0.0.0.0:8001/verify-email?token={token}"
+        f"http://localhost:8080/api/auth/verify-email?token={token}"
     )
     msg["Subject"] = "Уведомление (Celery + Docker)"
     msg["From"] = getenv("EMAIL_ADDRESS")
@@ -40,7 +40,7 @@ def send_password_reset_email(email: str, token: str):
     msg = MIMEText(
         f"Здравствуйте,\n\nВы получили это письмо, потому что запросили сброс пароля для вашей учетной записи.\n"
         f"Пожалуйста, перейдите по следующей ссылке, чтобы сбросить пароль: \n"
-        f"http://0.0.0.0:8001/password-reset?token={token}\n\n"
+        f"http://localhost:8080/api/auth/password-reset?token={token}\n\n"
         f"Если вы не запрашивали сброс пароля, проигнорируйте это письмо.\n\n"
         f"С уважением,\nКоманда поддержки"
     )

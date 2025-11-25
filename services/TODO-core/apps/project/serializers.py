@@ -6,7 +6,7 @@ from .models import Project, Task
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ("name", "description", "status", "owner_id", "created_at")
+        fields = ("name", "description", "status", "owner_id", "members", "created_at")
         read_only_fields = ("owner_id",)
         lookup_field = "name"
         extra_kwargs = {"url": {"lookup_field": "name"}}

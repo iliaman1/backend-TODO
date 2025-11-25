@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from os import environ
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -146,6 +150,17 @@ JWT_SECRET_KEY = environ.get("JWT_SECRET_KEY")
 JWT_ALGORITHM = environ.get("JWT_ALGORITHM", "HS256")
 
 AUTH_SERVICE_URL = environ.get("AUTH_SERVICE_URL")
+
+# Celery Configuration Options
+CELERY_BROKER_URL = f"redis://{environ.get('REDIS_HOST')}:{environ.get('REDIS_PORT')}/0"
+CELERY_RESULT_BACKEND = (
+    f"redis://{environ.get('REDIS_HOST')}:{environ.get('REDIS_PORT')}/0"
+)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
 
 # CORS settings для работы с куками
 CORS_ALLOW_ALL_ORIGINS = True

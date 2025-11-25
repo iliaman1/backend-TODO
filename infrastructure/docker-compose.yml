@@ -9,8 +9,10 @@ services:
     volumes:
       - static_volume:/app/staticfiles
     depends_on:
-      - auth-api
-      - todo-api
+      auth-api:
+        condition: service_healthy
+      todo-api:
+        condition: service_healthy
     networks:
       - backend-net
 
@@ -72,8 +74,8 @@ services:
       dockerfile: Dockerfile
     container_name: auth-api
     command: >
-      sh -c "alembic upgrade heads &&
-             uvicorn main:app --host 0.0.0.0 --port 8001"
+      sh -c "poetry run alembic upgrade heads &&
+             poetry run uvicorn main:app --host 0.0.0.0 --port 8001"
     volumes:
       - ../services/authentication:/app
     env_file:
@@ -86,20 +88,25 @@ services:
     networks:
       - backend-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   auth-worker:
     build:
       context: ../services/authentication
       dockerfile: Dockerfile
     container_name: auth-worker
-    command: celery -A tasks worker --loglevel=info
+    command: poetry run celery -A tasks worker --loglevel=info
     volumes:
       - ../services/authentication:/app
     env_file:
       - ../services/authentication/.env
     depends_on:
       auth-api:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -112,10 +119,10 @@ services:
       dockerfile: Dockerfile
     container_name: todo-api
     command: >
-      sh -c "python manage.py collectstatic --noinput &&
+      sh -c "poetry run python manage.py collectstatic --noinput &&
              chown -R 101:101 /app/staticfiles &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             poetry run python manage.py migrate &&
+             poetry run python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ../services/TODO-core:/app
       - static_volume:/app/staticfiles
@@ -123,6 +130,30 @@ services:
       - ../services/TODO-core/.env
     depends_on:
       todo-db:
+        condition: service_healthy
+    networks:
+      - backend-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  todo-worker:
+    build:
+      context: ../services/TODO-core
+      dockerfile: Dockerfile
+    container_name: todo-worker
+    command: poetry run celery -A settings.celery worker --loglevel=info
+    volumes:
+      - ../services/TODO-core:/app
+    env_file:
+      - ../services/TODO-core/.env
+    depends_on:
+      todo-api:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - backend-net

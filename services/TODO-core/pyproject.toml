@@ -1,25 +1,25 @@
-[project]
+[tool.poetry]
 name = "todo-core"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "ilia",email = "iliaforwork1993@gmail.com"}
-]
+authors = ["ilia <iliaforwork1993@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    "djangorestframework (>=3.16.0,<4.0.0)",
-    "python-dotenv (>=1.1.0,<2.0.0)",
-    "psycopg2-binary (>=2.9.10,<3.0.0)",
-    "pytest (>=8.4.1,<9.0.0)",
-    "pytest-django (>=4.11.1,<5.0.0)",
-    "factory-boy (>=3.3.3,<4.0.0)",
-    "pytest-mock (>=3.14.1,<4.0.0)",
-    "pyjwt[crypto] (>=2.8.0,<3.0.0)",
-    "requests (>=2.32.3,<3.0.0)"
-]
+package-mode = false
 
+[tool.poetry.dependencies]
+python = ">=3.11"
+djangorestframework = ">=3.16.0,<4.0.0"
+python-dotenv = ">=1.1.0,<2.0.0"
+psycopg2-binary = ">=2.9.10,<3.0.0"
+pytest = ">=8.4.1,<9.0.0"
+pytest-django = ">=4.11.1,<5.0.0"
+factory-boy = ">=3.3.3,<4.0.0"
+pytest-mock = ">=3.14.1,<4.0.0"
+pyjwt = {extras = ["crypto"], version = ">=2.8.0,<3.0.0"}
+requests = ">=2.32.3,<3.0.0"
+celery = ">=5.5.3"
+redis = ">=6.2.0"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

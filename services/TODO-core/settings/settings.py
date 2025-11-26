@@ -148,6 +148,7 @@ REST_FRAMEWORK = {
 # JWT settings
 JWT_SECRET_KEY = environ.get("JWT_SECRET_KEY")
 JWT_ALGORITHM = environ.get("JWT_ALGORITHM", "HS256")
+SERVICE_TOKEN = environ.get("SERVICE_TOKEN")
 
 AUTH_SERVICE_URL = environ.get("AUTH_SERVICE_URL")
 

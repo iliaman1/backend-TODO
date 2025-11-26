@@ -280,6 +280,13 @@ async def get_users(
     return {"total": total, "users": users}
 
 
+async def get_users_by_ids(db: AsyncSession, user_ids: list[int]) -> list[User]:
+    if not user_ids:
+        return []
+    result = await db.execute(select(User).where(User.id.in_(user_ids)))
+    return result.scalars().all()
+
+
 async def assign_permission_to_role(
     db: AsyncSession, role_id: int, permission_id: int
 ) -> Optional[Role]:

@@ -114,3 +114,7 @@ class UserOutSchema(BaseModel):
 class UserListSchema(BaseModel):
     total: int
     users: list[UserOutSchema]
+
+
+class UsersByIdsSchema(BaseModel):
+    user_ids: list[int]

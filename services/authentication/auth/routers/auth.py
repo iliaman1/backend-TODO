@@ -1,7 +1,7 @@
 from auth.dependencies import (
     RoleChecker,
     get_current_user,
-    get_token_from_cookie,
+    get_token_from_header_or_cookie,
     get_token_payload,
 )
 from auth.models.models import User
@@ -164,7 +164,7 @@ async def auth_required(user: User = Depends(get_current_user)):
 
 
 @auth_router.get("/verify-token")
-async def verify_token_endpoint(token: str = Depends(get_token_from_cookie)):
+async def verify_token_endpoint(token: str = Depends(get_token_from_header_or_cookie)):
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"

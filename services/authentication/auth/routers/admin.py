@@ -4,6 +4,7 @@ from auth.dependencies import RoleChecker
 from auth.enums import SortDirection, UserSortBy
 from auth.queries import (
     assign_permission_to_role,
+    assign_role_to_user,
     create_permission,
     create_role,
     delete_role,
@@ -20,6 +21,7 @@ from auth.schemas import (
     RoleOutSchema,
     RoleSchema,
     UserListSchema,
+    UserOutSchema,
 )
 from core.database import get_session
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -123,3 +125,13 @@ async def revoke_permission_from_role(
             detail="Role or Permission not found, or permission not assigned",
         )
     return role
+
+
+@admin_router.post("/users/{user_id}/roles/{role_id}", response_model=UserOutSchema)
+async def assign_role_to_user_endpoint(
+    user_id: int, role_id: int, db: AsyncSession = Depends(get_session)
+):
+    user = await assign_role_to_user(db, user_id, role_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User or Role not found")
+    return user

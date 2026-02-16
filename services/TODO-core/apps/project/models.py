@@ -69,6 +69,12 @@ class Task(BaseModel):
     due_date = models.DateField(
         verbose_name=_("Срок выполнения"), null=True, blank=True
     )
+    completed_at = models.DateTimeField(
+        verbose_name=_("Дата завершения"), null=True, blank=True
+    )
+    assigned_to_id = models.IntegerField(
+        verbose_name=_("ID Исполнителя"), null=True, blank=True
+    )
 
     def __str__(self):
         return f"{self.title} {self.project}"

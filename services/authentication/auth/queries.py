@@ -309,3 +309,21 @@ async def remove_permission_from_role(
         await db.commit()
         await db.refresh(role)
     return role
+
+
+async def assign_role_to_user(
+    db: AsyncSession, user_id: int, role_id: int
+) -> Optional[User]:
+    user = await get_user(db, user_id)
+    role = await get_role(db, role_id)
+    if user and role and role not in user.roles:
+        user.roles.append(role)
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def get_all_users_basic_info(db: AsyncSession) -> list[User]:
+    result = await db.execute(select(User.id, User.email))
+    # Возвращаем список словарей или User объекты с заполненными только id и email
+    return [{"id": user.id, "email": user.email} for user in result.all()]

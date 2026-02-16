@@ -118,3 +118,8 @@ class UserListSchema(BaseModel):
 
 class UsersByIdsSchema(BaseModel):
     user_ids: list[int]
+
+
+class UserBasicInfoSchema(BaseModel):
+    id: int
+    email: EmailStr

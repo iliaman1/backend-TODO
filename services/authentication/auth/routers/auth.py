@@ -34,6 +34,8 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email, send_password_reset_email
 
+from services.common.kafka_utils import send_kafka_message
+
 auth_router = APIRouter(tags=["Authentication"])
 
 
@@ -52,6 +54,17 @@ async def register_user(
     else:
         verification_token = create_verification_token(data={"sub": user.email})
         send_email.delay(token=verification_token)
+
+        # Отправляем сообщение в Kafka
+        send_kafka_message(
+            "users",
+            {
+                "event_type": "user_created",
+                "user_id": db_user.id,
+                "email": db_user.email,
+                "created_at": db_user.created_at.isoformat(),
+            },
+        )
 
     return db_user
 

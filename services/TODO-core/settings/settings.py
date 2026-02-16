@@ -20,7 +20,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -30,8 +29,7 @@ SECRET_KEY = environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0", "localhost"]
-
+ALLOWED_HOSTS = ["0.0.0.0", "localhost", "todo-api"]
 
 # Application definition
 
@@ -74,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "settings.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -88,7 +85,6 @@ DATABASES = {
         "PORT": environ.get("DATABASE_PORT"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -108,7 +104,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -121,8 +116,6 @@ USE_I18N = True
 USE_TZ = True
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-FORCE_SCRIPT_NAME = "/api/core"
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -152,6 +145,8 @@ SERVICE_TOKEN = environ.get("SERVICE_TOKEN")
 
 AUTH_SERVICE_URL = environ.get("AUTH_SERVICE_URL")
 
+from celery.schedules import crontab
+
 # Celery Configuration Options
 CELERY_BROKER_URL = f"redis://{environ.get('REDIS_HOST')}:{environ.get('REDIS_PORT')}/0"
 CELERY_RESULT_BACKEND = (
@@ -161,7 +156,15 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_DEFAULT_QUEUE = "todo_queue"
 
+# Celery Beat Settings
+CELERY_BEAT_SCHEDULE = {
+    "check_upcoming_deadlines": {
+        "task": "tasks.check_upcoming_deadlines",
+        "schedule": crontab(hour=16, minute=0, day_of_week="1-5"),
+    },
+}
 
 # CORS settings для работы с куками
 CORS_ALLOW_ALL_ORIGINS = True

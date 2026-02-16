@@ -28,7 +28,21 @@ class JWTPayloadUser:
 
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        token = request.COOKIES.get("access_token")
+        # Пытаемся получить токен из заголовка Authorization
+        auth_header = request.headers.get("Authorization")
+        token = None
+
+        if auth_header:
+            try:
+                # Ожидаем заголовок в формате "Bearer <token>"
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                # Если формат неправильный, игнорируем
+                pass
+
+        # Если в заголовке нет, ищем в cookie
+        if not token:
+            token = request.COOKIES.get("access_token")
 
         if not token:
             return None
@@ -41,8 +55,8 @@ class JWTAuthentication(BaseAuthentication):
             )
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed("Token has expired")
-        except jwt.PyJWTError:
-            raise AuthenticationFailed("Invalid token")
+        except jwt.PyJWTError as e:
+            raise AuthenticationFailed(f"Invalid token: {e}")
 
         user = JWTPayloadUser(payload)
         # Используем SimpleLazyObject для отложенного создания объекта

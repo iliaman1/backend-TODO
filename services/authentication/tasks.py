@@ -8,10 +8,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Celery(
-    "email_task",
+    "auth_tasks",
     broker=f'redis://{getenv("REDIS_HOST")}:{getenv("REDIS_PORT")}/0',
     backend=f'redis://{getenv("REDIS_HOST")}:{getenv("REDIS_PORT")}/0',
 )
+
+app.conf.task_default_queue = "auth_queue"
 
 
 @app.task

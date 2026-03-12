@@ -12,5 +12,4 @@ RUN pip install "poetry==1.8.2"
 
 COPY poetry.lock pyproject.toml README.md ./
 RUN poetry install --no-root
-
 COPY . .

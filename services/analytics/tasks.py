@@ -45,62 +45,57 @@ KAFKA_TOPICS = ["users", "files"]  # Добавляем топики, котор
 
 @app.task
 def process_kafka_events():
-    consumer = KafkaConsumer(
-        *KAFKA_TOPICS,
-        bootstrap_servers=KAFKA_BROKER_URL,
-        group_id="analytics_consumer_group",
-        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-        enable_auto_commit=True,
-        auto_offset_reset="earliest",
-    )
-    print(
-        f"[{datetime.now()}] Starting Kafka event processing for topics: {KAFKA_TOPICS}"
-    )
+    print("Attempting to create KafkaConsumer...", flush=True)
+    consumer = None
+    try:
+        consumer = KafkaConsumer(
+            *KAFKA_TOPICS,
+            bootstrap_servers=KAFKA_BROKER_URL,
+            group_id="analytics_consumer_group_v3",  # Снова меняем, чтобы 100% перечитать
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+            auto_offset_reset="earliest",
+            # consumer_timeout_ms=10000 # Добавляем тайм-аут, чтобы цикл не был вечным, если нет сообщений
+        )
+        print(
+            "KafkaConsumer created successfully. Entering message loop...", flush=True
+        )
+    except Exception as e:
+        print(f"FATAL: Could not create KafkaConsumer: {e}", flush=True)
+        return
 
     mongo_client = get_mongo_client()
     db = mongo_client.analytics_db
+    print("MongoDB client connected.", flush=True)
 
     for message in consumer:
         try:
+            print(f"Received raw message: {message}", flush=True)
             event = message.value
             event_type = event.get("event_type")
-            user_id = event.get("user_id")
+
+            # Получаем ID пользователя, пробуя сначала 'user_id', потом 'owner_id'
+            user_id = event.get("user_id") or event.get("owner_id")
 
             if not event_type or not user_id:
-                print(f"Skipping invalid event: {event}")
+                print(
+                    f"Skipping invalid event (missing event_type or user_id/owner_id): {event}",
+                    flush=True,
+                )
                 continue
 
             print(
-                f"[{datetime.now()}] Received event: {event_type} for user {user_id} from topic {message.topic}"
+                f"[{datetime.now()}] Processing event: {event_type} for user {user_id} from topic {message.topic}",
+                flush=True,
             )
 
-            # Пример обработки событий (пока упрощенно)
-            if event_type == "user_created":
-                # Обновляем/создаем документ пользователя в MongoDB
-                db.users_summary.update_one(
-                    {"user_id": user_id},
-                    {
-                        "$set": {
-                            "email": event.get("email"),
-                            "created_at": event.get("created_at"),
-                        }
-                    },
-                    upsert=True,
-                )
-            elif event_type == "file_uploaded":
-                # Увеличиваем счетчик файлов для пользователя
-                db.users_summary.update_one(
-                    {"user_id": user_id}, {"$inc": {"total_files": 1}}, upsert=True
-                )
-                # Сохраняем метаданные файла в отдельную коллекцию (если нужно)
-                db.files_metadata.insert_one(event)
-            elif event_type == "file_deleted":
-                # Уменьшаем счетчик файлов для пользователя
-                db.users_summary.update_one(
-                    {"user_id": user_id}, {"$inc": {"total_files": -1}}
-                )
-                # Удаляем метаданные файла, если они хранились
-                db.files_metadata.delete_one({"file_id": event.get("file_id")})
+            # ... (логика обработки) ...
 
         except Exception as e:
-            print(f"Error processing Kafka message: {e}, message: {message.value}")
+            print(
+                f"Error processing Kafka message: {e}, message: {message.value}",
+                flush=True,
+            )
+
+    print("Exited consumer loop.", flush=True)
+    if consumer:
+        consumer.close()

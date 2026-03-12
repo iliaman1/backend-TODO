@@ -31,10 +31,9 @@ from auth.schemas import (
 from core.database import get_session
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from fastapi.params import Depends
+from kafka_utils import send_kafka_message
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks import send_email, send_password_reset_email
-
-from services.common.kafka_utils import send_kafka_message
 
 auth_router = APIRouter(tags=["Authentication"])
 

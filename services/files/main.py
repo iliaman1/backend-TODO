@@ -13,7 +13,7 @@ from models import FileMetadata
 from authentication import get_current_user, JWTPayloadUser
 from sqlalchemy.future import select
 from sqlalchemy import delete, update
-from services.common.kafka_utils import send_kafka_message
+from kafka_utils import send_kafka_message
 
 load_dotenv()
 
